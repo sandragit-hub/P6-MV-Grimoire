@@ -3,7 +3,7 @@ const app = require('./app');
 const { log } = require('console');
 
 const normalizePort = val => {
-    const port = pareInt(val, 10);
+    const port = parseInt(val, 10);
 
     if (isNaN(port)) {
         return val;
