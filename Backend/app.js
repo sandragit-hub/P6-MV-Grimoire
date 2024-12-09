@@ -1,10 +1,20 @@
 const express = require('express');
-
 const app = express();
-
 const mongoose = require('mongoose');
+const Book = require('./models/Book');
 
 app.use(express.json());
+
+
+app.post('/api/stuff', (req, res, next) => {
+    delete req.body._id;
+    const Book = new Book({
+        ...req.body
+    });
+    Book.save()
+        .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
+        .catch(error => res.status(400).json({ error }));
+});
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
