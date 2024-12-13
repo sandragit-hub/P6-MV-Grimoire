@@ -2,11 +2,13 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 
-const bookRoutes = require('./route/book');
+const bookRoutes = require('./routes/book');
+const userRoutes = require('./routes/user');
 
 app.use(express.json()); //intercepte toute les requete avec content type json
 
 app.use('/api/books', bookRoutes);
+app.use('/api/auth', userRoutes);
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
