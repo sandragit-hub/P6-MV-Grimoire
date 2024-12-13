@@ -5,10 +5,6 @@ const mongoose = require('mongoose');
 const bookRoutes = require('./routes/book');
 const userRoutes = require('./routes/user');
 
-app.use(express.json()); //intercepte toute les requete avec content type json
-
-app.use('/api/books', bookRoutes);
-app.use('/api/auth', userRoutes);
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,12 +13,14 @@ app.use((req, res, next) => {
     next();
 });
 
-mongoose.connect('mongodb+srv://sandra17:gekZy9-ryfcoz-roczux@sandradata.e7zrm.mongodb.net/?retryWrites=true&w=majority&appName=SandraDATA',
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
+app.use(express.json()); //intercepte toute les requete avec content type json
+
+app.use('/api/books', bookRoutes);
+app.use('/api/auth', userRoutes);
+
+mongoose.connect('mongodb+srv://sandra17:gekZy9-ryfcoz-roczux@sandradata.e7zrm.mongodb.net/?retryWrites=true&w=majority&appName=SandraDATA')
     .then(() => console.log('Connexion à MongoDB réussie !'))
     .catch(() => console.log('Connexion à MongoDB échouée !'));
+
 
 module.exports = app;
