@@ -21,6 +21,12 @@ exports.modifyOneBook = (req, res, next) => {
         .catch(error => res.status(400).json({ error }));
 };
 
+exports.bestRatingBook = (req, res, next) => {
+    Book.find()
+        .then(books => res.status(200).json(books))
+        .catch(error => res.status(400).json({ error }));
+};
+
 exports.ratingBook = (req, res, next) => {
     Book.find()
         .then(books => res.status(200).json(books))
