@@ -16,13 +16,13 @@ exports.createBook = (req, res, next) => {
 };
 
 exports.deleteBook = (req, res, next) => {
-    Book.findOne({ id: req.params.id })
+    Book.findOne({ _id: req.params.id })
         .then(book => {
             if (book.userId != req.auth.userId) {
                 res.status(401).json({ message: 'Non authorisé' });
             } else {
                 const filename = book.imageUrl.split('/images')[1];
-                fs.unlink('images/${filename}', () => {
+                fs.unlink(`images/${filename}`, () => {
                     Book.deleteOne({ _id: req.params.id })
                         .then(() => res.status(201).json({ message: 'Objet supprimé !' }))
                         .catch(error => res.status(400).json({ error }));
@@ -39,7 +39,7 @@ exports.modifyOneBook = (req, res, next) => {
 
     delete bookObject._userId;
     Book.findOne({ _id: req.params.id })
-        .then((book) => {
+        .then(book => {
             if (book.userId != req.auth.userId) {
                 res.status(401).json({ message: 'Non autorisé' });
             } else {
@@ -56,15 +56,47 @@ exports.modifyOneBook = (req, res, next) => {
 
 exports.bestRatingBook = (req, res, next) => {
     Book.find()
+        .sort({ rating: -1 }) // Tri décroissant par note
+        .limit(3) // Limite à 3 livres
         .then(books => res.status(200).json(books))
         .catch(error => res.status(400).json({ error }));
 };
 
 exports.ratingBook = (req, res, next) => {
-    Book.find()
-        .then(books => res.status(200).json(books))
+    const { userId } = req.auth; // ID de l'utilisateur qui évalue
+    const { rating } = req.body; // La note envoyée dans la requête
+
+    Book.findOne({ _id: req.params.id })
+        .then(book => {
+            if (!book) {
+                res.status(404).json({ message: 'Livre non trouvé.' });
+            }
+            // Vérifie si l'utilisateur est l'auteur du livre
+            if (book.userId === userId) {
+                return res.status(403).json({ message: "Vous ne pouvez pas évaluer un livre que vous avez publié." });
+            }
+            // Ajoute ou met à jour l'évaluation
+            const existingRating = book.ratings.find(r => r.userId === userId);
+
+            if (existingRating) {
+                existingRating.rating = rating; // Met à jour la note si elle existe
+            } else {
+                book.ratings.push({ userId, rating }); // Ajoute une nouvelle note
+            }
+
+            // Met à jour la note moyenne
+            const totalRatings = book.ratings.reduce((sum, r) => sum + r.rating, 0);
+            book.averageRating = (totalRatings / book.ratings.length).toFixed(1);
+
+            // Sauvegarde les modifications
+            book.save()
+                .then(() => res.status(200).json({ message: 'Note enregistrée.', book }))
+                .catch(error => res.status(400).json({ error }));
+        })
         .catch(error => res.status(400).json({ error }));
+
 };
+
 
 exports.getOneBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id })
