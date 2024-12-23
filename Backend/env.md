@@ -1,0 +1,8 @@
+# Port du serveur
+PORT=3000
+
+# Connexion MongoDB
+DB_URL=mongodb+srv://sandra17:gekZy9-ryfcoz-roczux@sandradata.e7zrm.mongodb.net/?retryWrites=true&w=majority&appName=SandraDATA
+
+# Clé secrète pour les tokens JWT
+JWT_SECRET=RANDOM_TOKEN_SECRET
