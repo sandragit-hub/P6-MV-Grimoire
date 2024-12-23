@@ -1,10 +1,10 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-
+const path = require('path');
 const bookRoutes = require('./routes/book');
 const userRoutes = require('./routes/user');
-const path = require('path');
+
 
 
 app.use((req, res, next) => {
@@ -18,7 +18,8 @@ app.use(express.json()); //intercepte toute les requete avec content type json
 
 app.use('/api/books', bookRoutes);
 app.use('/api/auth', userRoutes);
-app.use('images', express.static(path.join(__dirname, 'images')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 
 mongoose.connect('mongodb+srv://sandra17:gekZy9-ryfcoz-roczux@sandradata.e7zrm.mongodb.net/?retryWrites=true&w=majority&appName=SandraDATA')
     .then(() => console.log('Connexion à MongoDB réussie !'))
