@@ -2,6 +2,7 @@ const Book = require('../models/Book');
 const fs = require('fs');
 const sharp = require('sharp');
 
+// Contrôleur de création de livre
 exports.createBook = (req, res, next) => {
     const bookObject = JSON.parse(req.body.book);
     delete bookObject._id;
@@ -16,23 +17,35 @@ exports.createBook = (req, res, next) => {
 
     // Utiliser Sharp pour redimensionner l'image
     sharp(req.file.path)
-        .resize(500, 500) // Redimensionne à 500x500 pixels
-        .toFile(resizedFilePath) // Enregistre l'image redimensionnée
-    // Supprime l'image originale non redimensionnée
-    fs.unlink(req.file.path, (err) => {
-        if (err) console.error('Erreur lors de la suppression du fichier original :', err);
+        .resize(300, 300) // Redimensionner l'image
+        .toFile(resizedFilePath, (err) => {
+            if (err) {
+                console.error('Erreur lors du redimensionnement de l\'image :', err);
+                return res.status(500).json({ error: 'Erreur lors du traitement de l\'image' });
+            }
 
-        const book = new Book({
-            ...bookObject,
-            userId: req.auth.userId,
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${resizedFilename}`
+            console.log('Chemin généré pour l\'image :', `${req.protocol}://${req.get('host')}/images/${resizedFilename}`);
 
+            // Supprimer l'image originale après traitement
+            fs.unlink(req.file.path, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error('Erreur lors de la suppression du fichier original :', unlinkErr);
+                }
+
+                // Créer l'objet livre dans la base de données
+                const book = new Book({
+                    ...bookObject,
+                    userId: req.auth.userId,
+                    imageUrl: `${req.protocol}://${req.get('host')}/images/${resizedFilename}`
+                });
+
+                book.save()
+                    .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
+                    .catch(error => res.status(400).json({ error }));
+            });
         });
-        book.save()
-            .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
-            .catch(error => res.status(400).json({ error }));
-    });
 };
+
 
 exports.deleteBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id })
