@@ -1,18 +1,37 @@
 const Book = require('../models/Book');
 const fs = require('fs');
+const sharp = require('sharp');
 
 exports.createBook = (req, res, next) => {
     const bookObject = JSON.parse(req.body.book);
     delete bookObject._id;
     delete bookObject._userId;
-    const book = new Book({
-        ...bookObject,
-        userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+
+    // Nom du fichier de l'image originale
+    const originalFilename = req.file.filename;
+
+    // Chemin vers le fichier image redimensionné
+    const resizedFilename = `resized_${originalFilename}`;
+    const resizedFilePath = `images/${resizedFilename}`;
+
+    // Utiliser Sharp pour redimensionner l'image
+    sharp(req.file.path)
+        .resize(500, 500) // Redimensionne à 500x500 pixels
+        .toFile(resizedFilePath) // Enregistre l'image redimensionnée
+    // Supprime l'image originale non redimensionnée
+    fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Erreur lors de la suppression du fichier original :', err);
+
+        const book = new Book({
+            ...bookObject,
+            userId: req.auth.userId,
+            imageUrl: `${req.protocol}://${req.get('host')}/images/${resizedFilename}`
+
+        });
+        book.save()
+            .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
+            .catch(error => res.status(400).json({ error }));
     });
-    book.save()
-        .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
-        .catch(error => res.status(400).json({ error }));
 };
 
 exports.deleteBook = (req, res, next) => {
@@ -43,7 +62,7 @@ exports.modifyOneBook = (req, res, next) => {
             if (book.userId != req.auth.userId) {
                 res.status(401).json({ message: 'Non autorisé' });
             } else {
-                Book.updateOne({ _id: req.params.id }, { bookObject, _id: req.params.id })
+                Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
                     .then(() => res.status(201).json({ message: 'Objet modifié !' }))
                     .catch(error => res.status(401).json({ error }));
             }
