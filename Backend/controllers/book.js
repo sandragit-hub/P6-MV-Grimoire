@@ -30,18 +30,18 @@ exports.createBook = (req, res, next) => {
                     console.error('Erreur lors de la suppression du fichier original :', unlinkErr);
                 }
 
-                // Créer l'objet livre dans la base de données
-                const book = new Book({
-                    ...bookObject,
-                    userId: req.auth.userId,
-                    imageUrl: `${req.protocol}://${req.get('host')}/images/${resizedFilename}`
-                });
-
-                book.save()
-                    .then(() => res.status(201).json({ message: 'Objet enregistré !' }))
-                    .catch(error => res.status(400).json({ error }));
             });
         });
+    // Créer l'objet livre dans la base de données
+    const book = new Book({
+        ...bookObject,
+        userId: req.auth.userId,
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${resizedFilename}`
+    });
+
+    book.save()
+        .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
+        .catch(error => res.status(400).json({ error }));
 };
 
 
@@ -54,7 +54,7 @@ exports.deleteBook = (req, res, next) => {
                 const filename = book.imageUrl.split('/images')[1];
                 fs.unlink(`images/${filename}`, () => {
                     Book.deleteOne({ _id: req.params.id })
-                        .then(() => res.status(201).json({ message: 'Objet supprimé !' }))
+                        .then(() => res.status(201).json({ message: 'Livre supprimé !' }))
                         .catch(error => res.status(400).json({ error }));
                 })
             }
