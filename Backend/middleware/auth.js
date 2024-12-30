@@ -13,11 +13,3 @@ module.exports = (req, res, next) => {
         res.status(401).json({ error });
     }
 };
-
-isCreator = (req, res, next) => {
-    if (userId != book.userId) {
-        res.status(401).json({ message: 'Non autorisé' });
-    } else {
-
-    }
-}
