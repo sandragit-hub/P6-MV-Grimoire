@@ -96,9 +96,7 @@ exports.ratingBook = (req, res, next) => {
     // Vérifie si l'ID du livre est présent
     if (!req.params.id) {
         return res.status(400).json({ message: 'L\'ID du livre est manquant !' });
-
     }
-
     // Crée la nouvelle note du livre
     const newRating = {
         userId: req.auth.userId,
@@ -113,14 +111,8 @@ exports.ratingBook = (req, res, next) => {
     // Recherche le livre par son ID
     Book.findOne({ _id: req.params.id })
         .then(book => {
-            // Vérifie si l'utilisateur est celui qui a ajouté le livre
-            const userRated = book.ratings.some(rating => rating.userId === req.auth.userId);
-            if (userRated) {
-                return res.status(400).json({ message: 'Vous avez déjà noté ce livre !' });
-            }
-
             // Vérifie si l'utilisateur a déjà voté
-            const hasRated = book.ratings.some(rating => rating.userId === req.auth.userId);
+            const hasRated = book.ratings.find(rating => rating.userId === req.auth.userId);
             if (hasRated) {
                 return res.status(400).json({ message: 'Vous avez déjà noté ce livre !' });
             }
@@ -143,8 +135,6 @@ exports.ratingBook = (req, res, next) => {
             res.status(500).json({ error });
         });
 };
-
-
 
 exports.getOneBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id })
