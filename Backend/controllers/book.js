@@ -95,7 +95,7 @@ exports.bestRatingBook = (req, res, next) => {
 exports.ratingBook = (req, res, next) => {
 
     // Vérifie que l'utilisateur est authentifié
-    if (userId !== req.auth.userId) {
+    if (!req.auth.userId) {
         return res.status(401).json({ message: "Non autorisé" });
     }
     // Vérifie si l'ID du livre est présent
