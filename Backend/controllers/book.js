@@ -93,6 +93,11 @@ exports.bestRatingBook = (req, res, next) => {
 };
 
 exports.ratingBook = (req, res, next) => {
+
+    // Vérifie que l'utilisateur est authentifié
+    if (userId !== req.auth.userId) {
+        return res.status(401).json({ message: "Non autorisé" });
+    }
     // Vérifie si l'ID du livre est présent
     if (!req.params.id) {
         return res.status(400).json({ message: 'L\'ID du livre est manquant !' });
@@ -111,6 +116,7 @@ exports.ratingBook = (req, res, next) => {
     // Recherche le livre par son ID
     Book.findOne({ _id: req.params.id })
         .then(book => {
+
             // Vérifie si l'utilisateur a déjà voté
             const hasRated = book.ratings.find(rating => rating.userId === req.auth.userId);
             if (hasRated) {
