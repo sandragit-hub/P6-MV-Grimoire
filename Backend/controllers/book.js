@@ -17,12 +17,7 @@ exports.createBook = (req, res, next) => {
 
     // Utiliser Sharp pour redimensionner l'image
     sharp(req.file.path)
-        .resize({
-            width: 300, // Largeur maximale
-            height: 300, // Hauteur maximale
-            fit: 'inside', // Conserve les proportions, sans rogner
-            withoutEnlargement: true // Empêche l'agrandissement si l'image est plus petite
-        })
+        .resize(400, 600) // Redimensionner l'image
         .toFile(resizedFilePath, (err) => {
             if (err) {
                 console.error('Erreur lors du redimensionnement de l\'image :', err);
