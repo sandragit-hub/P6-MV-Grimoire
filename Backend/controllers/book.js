@@ -1,6 +1,7 @@
 const Book = require('../models/Book');
 const fs = require('fs');
 const sharp = require('sharp');
+
 const MIME_TYPES = {
     'image/jpg': 'jpg',
     'image/jpeg': 'jpg',
@@ -61,42 +62,58 @@ exports.deleteBook = (req, res, next) => {
 };
 
 exports.modifyOneBook = (req, res, next) => {
-    const bookObject = req.file ? {
-        ...JSON.parse(req.body.book),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body };
+    const bookObject = req.file
+        ? { ...JSON.parse(req.body.book) }
+        : { ...req.body };
 
     delete bookObject._userId;
+
     Book.findOne({ _id: req.params.id })
         .then((book) => {
             if (book.userId != req.auth.userId) {
                 return res.status(401).json({ message: 'Non autorisé' });
             }
 
-            // Supprimer l'ancienne image si une nouvelle image est téléchargée
-            if (req.file && book.imageUrl) {
-                const oldImagePath = path.join(
-                    __dirname,
-                    '..',
-                    'images', // Remplacez 'images' par le dossier exact où les fichiers sont stockés
-                    path.basename(book.imageUrl)
-                );
-
-                fs.unlink(oldImagePath, (error) => {
-                    if (error) {
-                        console.error("Erreur lors de la suppression de l'image :", error);
+            if (req.file) {
+                // Supprimer l'ancienne image
+                const oldImagePath = `images/${book.imageUrl.split('/images/')[1]}`;
+                fs.unlink(oldImagePath, (err) => {
+                    if (err) {
+                        console.error("Erreur lors de la suppression de l'ancienne image :", err);
                     }
                 });
-            }
 
-            // Mettre à jour le livre avec les nouvelles données
-            Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
-                .then(() => res.status(201).json({ message: 'Objet modifié !' }))
-                .catch((error) => res.status(400).json({ error }));
+                // Nom du fichier redimensionné
+                const name = req.file.originalname.split(' ').join('_');
+                const extension = MIME_TYPES[req.file.mimetype];
+                const resizedFilename = `resized_${name + Date.now()}.${extension}`;
+                const resizedFilePath = `images/${resizedFilename}`;
+
+                // Utiliser Sharp pour redimensionner l'image
+                sharp(req.file.buffer)
+                    .resize(400, 600)
+                    .toFile(resizedFilePath, (err) => {
+                        if (err) {
+                            console.error("Erreur lors du redimensionnement de l'image :", err);
+                            return res.status(500).json({ error: 'Erreur lors du traitement de l\'image' });
+                        }
+
+                        // Mettre à jour l'URL de l'image dans l'objet
+                        bookObject.imageUrl = `${req.protocol}://${req.get('host')}/images/${resizedFilename}`;
+
+                        // Mettre à jour le livre dans la base de données
+                        Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                            .then(() => res.status(200).json({ message: 'Livre modifié avec succès !' }))
+                            .catch((error) => res.status(400).json({ error }));
+                    });
+            } else {
+                // Si aucune image n'est fournie, mettre à jour les autres champs
+                Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                    .then(() => res.status(200).json({ message: 'Livre modifié avec succès !' }))
+                    .catch((error) => res.status(400).json({ error }));
+            }
         })
-        .catch((error) => {
-            res.status(400).json({ error });
-        });
+        .catch((error) => res.status(500).json({ error }));
 };
 
 exports.bestRatingBook = (req, res, next) => {
