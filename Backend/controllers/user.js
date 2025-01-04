@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 require('dotenv').config(); // Charger les variables d'environnement depuis .env
 
+// Ajoute le log pour vérifier si la variable est bien chargée
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
 
 exports.signup = (req, res, next) => {
     bcrypt.hash(req.body.password, 10)
