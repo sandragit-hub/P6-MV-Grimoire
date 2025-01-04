@@ -69,33 +69,35 @@ exports.modifyOneBook = (req, res, next) => {
 
     delete bookObject._userId;
     Book.findOne({ _id: req.params.id })
-        .then(book => {
+        .then((book) => {
             if (book.userId != req.auth.userId) {
-                res.status(401).json({ message: 'Non autorisé' });
-                // Supprimez l'ancienne image si une nouvelle image est téléchargée
-                if (req.file && book.imageUrl) {
-                    const imagePath = path.join(
-                        __dirname,
-                        "..",
-                        "uploads",
-                        path.basename(book.imageUrl)
-                    );
-                    fs.unlink(imagePath, (error) => {
-                        if (error) {
-                            console.error("Erreur lors de la suppression de l'image:", error);
-                        }
-                    });
-                }
-            } else {
-                Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
-                    .then(() => res.status(201).json({ message: 'Objet modifié !' }))
-                    .catch(error => res.status(401).json({ error }));
+                return res.status(401).json({ message: 'Non autorisé' });
             }
+
+            // Supprimer l'ancienne image si une nouvelle image est téléchargée
+            if (req.file && book.imageUrl) {
+                const oldImagePath = path.join(
+                    __dirname,
+                    '..',
+                    'images', // Remplacez 'images' par le dossier exact où les fichiers sont stockés
+                    path.basename(book.imageUrl)
+                );
+
+                fs.unlink(oldImagePath, (error) => {
+                    if (error) {
+                        console.error("Erreur lors de la suppression de l'image :", error);
+                    }
+                });
+            }
+
+            // Mettre à jour le livre avec les nouvelles données
+            Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                .then(() => res.status(201).json({ message: 'Objet modifié !' }))
+                .catch((error) => res.status(400).json({ error }));
         })
         .catch((error) => {
-            res.status(400).json({ error })
+            res.status(400).json({ error });
         });
-
 };
 
 exports.bestRatingBook = (req, res, next) => {
