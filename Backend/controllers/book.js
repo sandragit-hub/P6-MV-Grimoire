@@ -1,6 +1,11 @@
 const Book = require('../models/Book');
 const fs = require('fs');
 const sharp = require('sharp');
+const MIME_TYPES = {
+    'image/jpg': 'jpg',
+    'image/jpeg': 'jpg',
+    'image/png': 'png'
+};
 
 // Contrôleur de création de livre
 exports.createBook = (req, res, next) => {
@@ -8,29 +13,23 @@ exports.createBook = (req, res, next) => {
     delete bookObject._id;
     delete bookObject._userId;
 
-    // Nom du fichier de l'image originale
-    const originalFilename = req.file.filename;
+    // Nom du fichier redimensionné
+    const name = req.file.originalname.split(' ').join('_');
+    const extension = MIME_TYPES[req.file.mimetype];
+    const originalFilename = name + Date.now() + '.' + extension
 
     // Chemin vers le fichier image redimensionné
     const resizedFilename = `resized_${originalFilename}`;
     const resizedFilePath = `images/${resizedFilename}`;
 
     // Utiliser Sharp pour redimensionner l'image
-    sharp(req.file.path)
+    sharp(req.file.buffer)
         .resize(400, 600) // Redimensionner l'image
         .toFile(resizedFilePath, (err) => {
             if (err) {
                 console.error('Erreur lors du redimensionnement de l\'image :', err);
                 return res.status(500).json({ error: 'Erreur lors du traitement de l\'image' });
             }
-
-            // Supprimer l'image originale après traitement
-            fs.unlink(req.file.path, (unlinkErr) => {
-                if (unlinkErr) {
-                    console.error('Erreur lors de la suppression du fichier original :', unlinkErr);
-                }
-
-            });
         });
     // Créer l'objet livre dans la base de données
     const book = new Book({
