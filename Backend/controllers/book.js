@@ -66,26 +66,22 @@ exports.modifyOneBook = (req, res, next) => {
         ...JSON.parse(req.body.book),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     } : { ...req.body };
+
     delete bookObject._userId;
     Book.findOne({ _id: req.params.id })
         .then(book => {
             if (book.userId != req.auth.userId) {
                 res.status(401).json({ message: 'Non autorisé' });
-            }
-            else {
+            } else {
                 Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
-                    .then(() => res.status(201).json({ message: 'Objet modifié !' }));
-                //delete old file
-                const oldFile = book.imageUrl.split('/images')[1];
-                req.file && fs.unlink(`images/${oldFile}`, (err => {
-                    if (err) console.log(err);
-                }))
+                    .then(() => res.status(201).json({ message: 'Objet modifié !' }))
                     .catch(error => res.status(401).json({ error }));
             }
         })
         .catch((error) => {
             res.status(400).json({ error })
         });
+
 };
 
 exports.bestRatingBook = (req, res, next) => {
