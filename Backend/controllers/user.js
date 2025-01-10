@@ -8,7 +8,7 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 exports.signup = (req, res, next) => {
     // Regex pour valider une adresse e-mail
-    const emailRegex = newRegExp('[a-z0-9._-]+@[a-z0-9._-]+11.[a-z0-9._-]+');
+    const emailRegex = /^.+@.+\..{2,4}$/;
 
     // Vérifie si l'e-mail est valide
     if (!emailRegex.test(req.body.email)) {
