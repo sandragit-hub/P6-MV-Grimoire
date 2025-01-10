@@ -10,7 +10,6 @@ exports.signup = (req, res, next) => {
     // Regex pour valider une adresse e-mail
     const emailRegex = /^.+@.+\..{2,4}$/;
 
-    // Vérifie si l'e-mail est valide
     if (!emailRegex.test(req.body.email)) {
         return res.status(400).json({ message: "Adresse e-mail invalide !" });
     }
